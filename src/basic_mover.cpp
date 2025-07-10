@@ -22,30 +22,32 @@ private:
      void move_forward()
      {
          geometry_msgs::msg::Twist cmd;
-         if (cycle_ < 10)
+         current_time_ = this->now().seconds();
+         if (current_time_ - initial_time_ < 3)
          {
             cmd.linear.x = 0.2;
             cmd.angular.z = 0.0;
          }
 
-         else if (cycle_ < 20)
+         else if (current_time_ - initial_time_ < 4)
          {
             cmd.linear.x = 0.0;
-            cmd.angular.z = 0.5;
+            cmd.angular.z = 1.570796327;
          }
 
          else
          {
-            cycle_ = 0;
+            initial_time_ = current_time_;
          }
 
          publisher_->publish(cmd);
-         cycle_++;
+         RCLCPP_INFO(this->get_logger(), "Publishing: linear.x = %f, angular.z = %f", cmd.linear.x, cmd.angular.z);
      }
 
      rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
      rclcpp::TimerBase::SharedPtr timer_;
-     int cycle_ = 0;
+     int initial_time_ = this->now().seconds();
+     int current_time_;
 };
 
 
