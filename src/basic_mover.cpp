@@ -15,6 +15,7 @@ public:
      {
         publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         timer_ = this->create_wall_timer(500ms, std::bind(&BasicMoverPublisher::move_forward, this));
+        initial_time = this->now().seconds();
      }
 
 
@@ -22,22 +23,36 @@ private:
      void move_forward()
      {
          geometry_msgs::msg::Twist cmd;
-         current_time_ = this->now().seconds();
-         if (current_time_ - initial_time_ < 3)
+         if (sides_ == 4){
+            cmd.linear.x = 0.0;
+            cmd.angular.z = 0.0;
+            publisher_->publish(cmd);
+            return;
+         }
+
+         current_time = this->now().seconds();
+         if (state == 0 && current_time - initial_time < 3)
          {
             cmd.linear.x = 0.2;
             cmd.angular.z = 0.0;
          }
 
-         else if (current_time_ - initial_time_ < 4)
+         else if (state == 0 && current_time - initial_time >= 3)
+         {
+            state = 1;
+         }
+
+         else if (state == 1 && current_time - initial_time < 6)
          {
             cmd.linear.x = 0.0;
-            cmd.angular.z = 1.570796327;
+            cmd.angular.z = 0.5236;
          }
 
          else
          {
-            initial_time_ = current_time_;
+            state = 0;
+            initial_time = this->now().seconds();
+            sides_++;
          }
 
          publisher_->publish(cmd);
@@ -46,8 +61,10 @@ private:
 
      rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
      rclcpp::TimerBase::SharedPtr timer_;
-     int initial_time_ = this->now().seconds();
-     int current_time_;
+     int initial_time;
+     int current_time;
+     int sides_ = 0;
+     int state;
 };
 
 
