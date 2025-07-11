@@ -15,7 +15,7 @@ public:
      {
         publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         timer_ = this->create_wall_timer(500ms, std::bind(&BasicMoverPublisher::move_forward, this));
-        initial_time = this->now().seconds();
+        initial_time = this->now();
      }
 
 
@@ -23,47 +23,59 @@ private:
      void move_forward()
      {
          geometry_msgs::msg::Twist cmd;
-         if (sides_ == 4){
+         if (sides == 4){
             cmd.linear.x = 0.0;
             cmd.angular.z = 0.0;
             publisher_->publish(cmd);
             return;
          }
 
-         current_time = this->now().seconds();
-         if (state == 0 && current_time - initial_time < 3)
+         current_time = this->now();
+         switch (state)
          {
-            cmd.linear.x = 0.2;
-            cmd.angular.z = 0.0;
-         }
+         case 0:
+            if (elapsedTime(initial_time, current_time) < 2.0){
+               cmd.linear.x = 0.2;
+               cmd.angular.z = 0.0;
+            }
 
-         else if (state == 0 && current_time - initial_time >= 3)
-         {
-            state = 1;
-         }
+            else{
+               state = 1;
+            }
+            break;
 
-         else if (state == 1 && current_time - initial_time < 6)
-         {
-            cmd.linear.x = 0.0;
-            cmd.angular.z = 0.5236;
-         }
+         case 1:
+            if (elapsedTime(initial_time, current_time) < 4.0){
+               cmd.linear.x = 0.0;
+               cmd.angular.z = 1.0;
+            }
 
-         else
-         {
-            state = 0;
-            initial_time = this->now().seconds();
-            sides_++;
+            else{
+               state = 0;
+               initial_time = this->now();
+               sides++;
+            }
+            break;
+         
+         default:
+            break;
          }
 
          publisher_->publish(cmd);
          RCLCPP_INFO(this->get_logger(), "Publishing: linear.x = %f, angular.z = %f", cmd.linear.x, cmd.angular.z);
      }
 
+     double elapsedTime(rclcpp::Time iTime,rclcpp::Time cTime){
+         rclcpp::Duration dTime = cTime - iTime;
+         double seconds = dTime.seconds();
+         return seconds;
+     }
+
      rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
      rclcpp::TimerBase::SharedPtr timer_;
-     int initial_time;
-     int current_time;
-     int sides_ = 0;
+     rclcpp::Time initial_time;
+     rclcpp::Time current_time;
+     int sides = 0;
      int state;
 };
 
