@@ -17,10 +17,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 
 
 add_executable(basic_mover src/basic_mover.cpp)
-ament_target_dependencies(basic_mover rclcpp geometry_msgs)
+ament_target_dependencies(basic_mover rclcpp geometry_msgs nav_msgs tf2)
 
 add_executable(odom_sub src/odom_sub.cpp)
 ament_target_dependencies(odom_sub rclcpp nav_msgs)
