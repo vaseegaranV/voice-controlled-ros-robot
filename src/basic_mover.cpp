@@ -9,8 +9,7 @@
 
 using namespace std::chrono_literals;
 
-class BasicMoverPublisher : public rclcpp::Node
-{
+class BasicMoverPublisher : public rclcpp::Node {
 
 public:
     BasicMoverPublisher()
@@ -18,6 +17,7 @@ public:
      {
         publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 10, std::bind(&BasicMoverPublisher::move_forward, this, std::placeholders::_1));
+        timer_ = this->create_wall_timer(100ms, std::bind(&BasicMoverPublisher::publish_msg, this));
      }
 
 
@@ -35,7 +35,7 @@ private:
          if (sides == 4){
             cmd.linear.x = 0.0;
             cmd.angular.z = 0.0;
-            publisher_->publish(cmd);
+            message_to_publish = cmd;
             return;
          }
 
@@ -83,7 +83,7 @@ private:
             break;
          }
 
-         publisher_->publish(cmd);
+         message_to_publish = cmd;
          //RCLCPP_INFO(this->get_logger(), "Publishing: linear.x = %f, angular.z = %f", cmd.linear.x, cmd.angular.z);
      }
 
@@ -101,19 +101,29 @@ private:
          return std::sqrt(std::pow(p1.y - p2.y, 2) + std::pow(p1.x - p2.x, 2));
      }
 
+     void publish_msg(){
+         publisher_->publish(message_to_publish);
+     }
+
      rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
      rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscriber_;
+     rclcpp::TimerBase::SharedPtr timer_;
      int sides = 0;
      // 0 is straight and 1 is turn
      int state = 0;
      int start = 0;
      geometry_msgs::msg::Point initial_position;
      geometry_msgs::msg::Quaternion initial_rotation;
+     geometry_msgs::msg::Twist message_to_publish;
+
+     const double Kp = 1.0;
+     const double Ki = 0.0;
+     const double Kd = 0.1;
+     const double target_distance = 0.5;
 };
 
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char * argv[]) {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<BasicMoverPublisher>();
     rclcpp::spin(node);
