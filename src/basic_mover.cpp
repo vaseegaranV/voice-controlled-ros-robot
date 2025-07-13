@@ -44,36 +44,51 @@ private:
          switch (state)
          {
          case 0:
-            if (distance_calc(initial_position, current_position) < 0.5){
-               cmd.linear.x = 0.2;
+            if (distance_calc(initial_position, current_position) < target_distance){
                cmd.angular.z = 0.0;
+               error = target_distance - distance_calc(initial_position, current_position);
+               double pid = caluculate_pid(error, prev_error_0, integral_0, state, clamp_val_0);
+               cmd.linear.x = std::clamp(pid, -clamp_val_0, clamp_val_0);
             }
 
             else{
                state = 1;
                start = 0;
+               prev_error_0 = 0;
+               integral_0 = 0;
+               prev_error_1 = 0;
+               integral_1 = 0;
             }
             break;
 
          case 1: {
             double initial_yaw = quaternion_to_yaw(initial_rotation);
             double current_yaw = quaternion_to_yaw(current_rotation);
-            double angle_diff = current_yaw - initial_yaw;
 
-            if (angle_diff > M_PI) {angle_diff -= 2 * M_PI;}
-            if (angle_diff < -M_PI) {angle_diff += 2 * M_PI;}
+            double target_yaw = initial_yaw + M_PI / 2.0;
+            
+            while (target_yaw > M_PI) {target_yaw -= M_PI * 2;}
+            while (target_yaw <= M_PI) {target_yaw += M_PI * 2;}
 
-            //RCLCPP_INFO(this->get_logger(), "  Turning. Initial Yaw: %.2f, Current Yaw: %.2f, Angle Diff: %.2f", initial_yaw, current_yaw, angle_diff);
+            double angle_error = target_yaw - current_yaw;
 
-            if (std::abs(std::abs(angle_diff) - M_PI/2) > 0.05){
-               RCLCPP_INFO(this->get_logger(), "angle diff: %f", angle_diff);
+            if (angle_error > M_PI) {angle_error -= 2 * M_PI;}
+            if (angle_error <= -M_PI) {angle_error += 2 * M_PI;}
+
+            if (std::abs(angle_error) > 0.05){
+               RCLCPP_INFO(this->get_logger(), "angle error: %f", angle_error);
                cmd.linear.x = 0.0;
-               cmd.angular.z = 0.7;
+               double pid = caluculate_pid(angle_error, prev_error_1, integral_1, state, clamp_val_1);
+               cmd.angular.z = std::clamp(pid, -clamp_val_1, clamp_val_1);
             }
 
             else{
                state = 0;
                start = 0;
+               prev_error_0 = 0;
+               integral_0 = 0;
+               prev_error_1 = 0;
+               integral_1 = 0;
                sides++;
             }
             break;
@@ -105,6 +120,46 @@ private:
          publisher_->publish(message_to_publish);
      }
 
+     double caluculate_pid(double error, double &prev_error, double &integral, int state, const double clamp_val){
+         double Kp = 0.0;
+         double Ki = 0.0;
+         double Kd = 0.0;
+
+         switch (state)
+         {
+         //For moving forward
+         case 0:
+            Kp = 0.6;
+            Ki = 0.0;
+            Kd = 0.0;
+            break;
+         
+         //For turning
+         case 1:
+            Kp = 0.2;
+            Ki = 0.0;
+            Kd = 0.0;
+            break;
+         
+         default:
+            break;
+         }
+         
+
+         double derivative = error - prev_error;
+         double pid_val = Kp * error + Ki * integral + Kd * derivative;
+
+         if (std::abs(pid_val) < clamp_val || error * pid_val < 0)
+         {
+            integral += error;
+         }
+         
+
+         prev_error = error;
+
+         return Kp * error + Ki * integral + Kd * derivative;
+     }
+
      rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
      rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscriber_;
      rclcpp::TimerBase::SharedPtr timer_;
@@ -116,9 +171,13 @@ private:
      geometry_msgs::msg::Quaternion initial_rotation;
      geometry_msgs::msg::Twist message_to_publish;
 
-     const double Kp = 1.0;
-     const double Ki = 0.0;
-     const double Kd = 0.1;
+     double error;
+     double prev_error_0 = 0;
+     double integral_0 = 0;
+     double prev_error_1 = 0;
+     double integral_1 = 0;
+     const double clamp_val_0 = 0.8;
+     const double clamp_val_1 = 0.8;
      const double target_distance = 0.5;
 };
 
