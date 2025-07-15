@@ -47,8 +47,9 @@ private:
             if (distance_calc(initial_position, current_position) < target_distance){
                cmd.angular.z = 0.0;
                error = target_distance - distance_calc(initial_position, current_position);
+               RCLCPP_INFO(get_logger(), "ERROR: %f", error);
                double pid = caluculate_pid(error, prev_error_0, integral_0, state, clamp_val_0);
-               cmd.linear.x = std::clamp(pid, -clamp_val_0, clamp_val_0);
+               cmd.linear.x = pid;
             }
 
             else{
@@ -68,28 +69,34 @@ private:
             double target_yaw = initial_yaw + M_PI / 2.0;
             
             while (target_yaw > M_PI) {target_yaw -= M_PI * 2;}
-            while (target_yaw <= M_PI) {target_yaw += M_PI * 2;}
+            while (target_yaw <= -M_PI) {target_yaw += M_PI * 2;}
 
             double angle_error = target_yaw - current_yaw;
 
             if (angle_error > M_PI) {angle_error -= 2 * M_PI;}
             if (angle_error <= -M_PI) {angle_error += 2 * M_PI;}
+            static int settle_counter;
 
-            if (std::abs(angle_error) > 0.05){
+            if (std::abs(angle_error) > 0.03){
                RCLCPP_INFO(this->get_logger(), "angle error: %f", angle_error);
+               settle_counter = 0;
                cmd.linear.x = 0.0;
                double pid = caluculate_pid(angle_error, prev_error_1, integral_1, state, clamp_val_1);
-               cmd.angular.z = std::clamp(pid, -clamp_val_1, clamp_val_1);
+               cmd.angular.z = pid;
             }
 
             else{
-               state = 0;
-               start = 0;
-               prev_error_0 = 0;
-               integral_0 = 0;
-               prev_error_1 = 0;
-               integral_1 = 0;
-               sides++;
+               settle_counter++;
+               if (settle_counter > 5) {
+                  state = 0;
+                  start = 0;
+                  prev_error_0 = 0;
+                  integral_0 = 0;
+                  prev_error_1 = 0;
+                  integral_1 = 0;
+                  sides++;
+                  settle_counter = 0;
+               }
             }
             break;
          }
@@ -107,8 +114,6 @@ private:
          tf2::Matrix3x3 m(quat);
          double roll, pitch, yaw;
          m.getEulerYPR(yaw, pitch, roll);
-         RCLCPP_INFO(this->get_logger(), "Quaternion (x=%.3f, y=%.3f, z=%.3f, w=%.3f) -> Yaw: %.3f rad (%.1f deg)",
-                     q.x, q.y, q.z, q.w, yaw, yaw * 180.0 / M_PI);
          return yaw;
      }
 
@@ -129,16 +134,16 @@ private:
          {
          //For moving forward
          case 0:
-            Kp = 0.6;
+            Kp = 2.7;
             Ki = 0.0;
-            Kd = 0.0;
+            Kd = 0.1;
             break;
          
          //For turning
          case 1:
-            Kp = 0.2;
-            Ki = 0.0;
-            Kd = 0.0;
+            Kp = 0.6;
+            Ki = 0.1;
+            Kd = 0.1;
             break;
          
          default:
@@ -157,7 +162,7 @@ private:
 
          prev_error = error;
 
-         return Kp * error + Ki * integral + Kd * derivative;
+         return std::clamp(Kp * error + Ki * integral + Kd * derivative, -clamp_val, clamp_val);
      }
 
      rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
