@@ -18,6 +18,13 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/LocationSave.srv"
+  "srv/MoveToRoom.srv"
+  DEPENDENCIES geometry_msgs
+)
 
 
 add_executable(basic_mover src/basic_mover.cpp)
