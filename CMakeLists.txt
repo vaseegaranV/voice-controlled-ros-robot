@@ -26,6 +26,7 @@ find_package(rclcpp_action REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/LocationSave.srv"
   "srv/MoveToRoom.srv"
+  "srv/GetRoomName.srv"
   DEPENDENCIES geometry_msgs
 )
 
@@ -51,6 +52,10 @@ install(TARGETS odom_sub
 )
 
 install(TARGETS location_manager
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS smart_nav_bot/voice_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()
