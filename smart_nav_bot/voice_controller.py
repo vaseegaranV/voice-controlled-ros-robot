@@ -46,9 +46,9 @@ class VoiceController(Node):
         keywords = future.result().room_names
 
         room_found = None
-        for word in text.split():
-            if word in keywords:
-                room_found = word
+        for keyword in keywords:
+            if keyword in text:
+                room_found = keyword
 
         if room_found:
             self.get_logger().info(f"We found room {room_found}")

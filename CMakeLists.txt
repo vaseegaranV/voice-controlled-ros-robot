@@ -27,6 +27,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/LocationSave.srv"
   "srv/MoveToRoom.srv"
   "srv/GetRoomName.srv"
+  "action/NavigateToRoom.action"
   DEPENDENCIES geometry_msgs
 )
 
@@ -58,4 +59,6 @@ install(TARGETS location_manager
 install(PROGRAMS smart_nav_bot/voice_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+ament_export_dependencies(rosidl_default_runtime)
 ament_package()
