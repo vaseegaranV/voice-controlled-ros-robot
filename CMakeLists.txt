@@ -41,8 +41,12 @@ ament_target_dependencies(odom_sub rclcpp nav_msgs)
 add_executable(location_manager src/location_manager.cpp)
 ament_target_dependencies(location_manager rclcpp geometry_msgs nav2_msgs rclcpp_action)
 
+add_executable(navigation_manager src/navigation_manager.cpp)
+ament_target_dependencies(navigation_manager rclcpp geometry_msgs nav2_msgs rclcpp_action)
+
 
 rosidl_target_interfaces(location_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_target_interfaces(navigation_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 install(TARGETS basic_mover
   DESTINATION lib/${PROJECT_NAME}
@@ -53,6 +57,10 @@ install(TARGETS odom_sub
 )
 
 install(TARGETS location_manager
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS navigation_manager
   DESTINATION lib/${PROJECT_NAME}
 )
 
