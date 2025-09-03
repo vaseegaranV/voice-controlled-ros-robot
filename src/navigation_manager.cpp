@@ -2,6 +2,8 @@
 #include <chrono>
 #include <map>
 #include <string>
+#include <algorithm> 
+#include <thread>
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -48,6 +50,7 @@ class NavigationManager : public rclcpp::Node{
         }
 
         void execute(const std::shared_ptr<GoalHandleNavigateToRoom> goal_handle){
+            RCLCPP_INFO(this->get_logger(), "We are in the execute");
             const auto goal = goal_handle->get_goal();
             auto feedback = std::make_shared<NavigateToRoom::Feedback>();
             auto result = std::make_shared<NavigateToRoom::Result>();
@@ -59,6 +62,7 @@ class NavigationManager : public rclcpp::Node{
             {
                 RCLCPP_INFO(this->get_logger(), "Timeout waiting for server");
                 result->success = false;
+                result->message = "Timeout waiting for room location server";
                 goal_handle->abort(result);
                 return;
             }
@@ -70,6 +74,7 @@ class NavigationManager : public rclcpp::Node{
             if(names.size() != poses.size()){
                 RCLCPP_INFO(this->get_logger(), "Name list and Room list don't match");
                 result->success = false;
+                result->message = "Room data error";
                 goal_handle->abort(result);
                 return;
             }
@@ -79,6 +84,7 @@ class NavigationManager : public rclcpp::Node{
             if (iterator == names.end()) {
                 RCLCPP_INFO(this->get_logger(), "Room not in list");
                 result->success = false;
+                result->message = "Room not found";
                 goal_handle->abort(result);
                 return;
             }
@@ -89,6 +95,7 @@ class NavigationManager : public rclcpp::Node{
             if (!nav2_action_client_->wait_for_action_server(std::chrono::seconds(5))) {
                 RCLCPP_ERROR(this->get_logger(), "Nav2 NavigateToPose action server not available.");
                 result->success = false;
+                result->message = "Nav2 service unavailable";
                 goal_handle->abort(result);
                 return;
             }
@@ -112,6 +119,7 @@ class NavigationManager : public rclcpp::Node{
             if (!nav2_goal_handle) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to send goal to Nav2.");
                 result->success = false;
+                result->message = "Nav2 goal rejected";
                 goal_handle->abort(result);
                 return;
             }
@@ -124,6 +132,7 @@ class NavigationManager : public rclcpp::Node{
                     auto cancel_future = nav2_action_client_->async_cancel_goal(nav2_goal_handle);
                     cancel_future.wait();
                     result->success = false;
+                    result->message = "Navigation cancelled";
                     goal_handle->canceled(result);
                     return;
                 }
@@ -148,12 +157,14 @@ class NavigationManager : public rclcpp::Node{
             {
                 RCLCPP_INFO(this->get_logger(), "Successfully navigated to room: %s", goal->room_name.c_str());
                 result->success = true;
+                result->message = "Navigation Completed successfully";
                 goal_handle->succeed(result);
             }
             
             else{
                 RCLCPP_WARN(this->get_logger(), "Navigation to room failed.");
                 result->success = false;
+                result->message = "Navigation to room failed";
                 goal_handle->abort(result);
             }
             
@@ -162,6 +173,7 @@ class NavigationManager : public rclcpp::Node{
         void feedback_callback(std::shared_ptr<GoalHandleNavigateToRoom> goal_handle, std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> feedback){
             auto fb = std::make_shared<NavigateToRoom::Feedback>();
             fb->message = std::to_string(feedback->distance_remaining);
+            RCLCPP_INFO(this->get_logger(), "Publishing feedback: %s", fb->message.c_str());
             goal_handle->publish_feedback(fb);
         }
 };

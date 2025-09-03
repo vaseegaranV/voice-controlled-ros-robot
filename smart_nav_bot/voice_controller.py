@@ -26,6 +26,7 @@ class VoiceController(Node):
                     self.get_logger().info(f"Say something...")
                     audio = self.recogniser.listen(source, timeout=3, phrase_time_limit=5)
 
+
                 command = self.recogniser.recognize_google(audio)
                 self.get_logger().info(f"You said: {command}")
                 self.process_commands(command.lower())
@@ -33,6 +34,8 @@ class VoiceController(Node):
                 self.get_logger().warn("Could not understand the command.")
             except sr.RequestError as e:
                 self.get_logger().error(f"Could not request results; {e}")
+            except sr.WaitTimeoutError:
+                self.get_logger().info("Didn't get a response, please try again")
 
     def process_commands(self, text):
         if not self.get_room_client.wait_for_service(timeout_sec=5.0):

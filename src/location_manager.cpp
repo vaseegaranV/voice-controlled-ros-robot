@@ -83,13 +83,13 @@ class LocationManager : public rclcpp::Node{
         }
 
         void feedback_callback(std::shared_ptr<GoalHandleNavigateToRoom> goal_handle, const std::shared_ptr<const NavigateToRoom::Feedback> feedback){
-            RCLCPP_INFO(this->get_logger(), "%s", feedback->message);
+            RCLCPP_INFO(this->get_logger(), "%s", feedback->message.c_str());
         }
 
         void result_callback(const GoalHandleNavigateToRoom::WrappedResult &result){
             switch (result.code) {
                 case rclcpp_action::ResultCode::SUCCEEDED:
-                    RCLCPP_INFO(this->get_logger(), "Message: %s", result.result->message);
+                    RCLCPP_INFO(this->get_logger(), "Message: %s", result.result->message.c_str());
                     break;
                 case rclcpp_action::ResultCode::ABORTED:
                     RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
