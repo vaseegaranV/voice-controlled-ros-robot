@@ -68,6 +68,10 @@ install(PROGRAMS smart_nav_bot/voice_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(PROGRAMS smart_nav_bot/room_saver.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(
   DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/
