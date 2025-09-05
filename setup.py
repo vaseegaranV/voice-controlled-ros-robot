@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'voice_controller = smart_nav_bot.voice_controller:main',
+            'room_saver = smart_nav_bot.room_saver:main',
         ],
     },
 )

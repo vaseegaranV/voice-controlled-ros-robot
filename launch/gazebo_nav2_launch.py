@@ -14,6 +14,19 @@ def generate_launch_description():
             'QT_QPA_PLATFORM',
             'xcb'
         ),
+
+        Node(
+            package='smart_nav_bot',
+            executable='location_manager',
+            name='location_manager',
+            output='screen'
+        ),
+        Node(
+            package='smart_nav_bot',
+            executable='navigation_manager',
+            name='navigation_manager',
+            output='screen'
+        ),
         
         # Launch Gazebo world
         ExecuteProcess(
@@ -31,17 +44,6 @@ def generate_launch_description():
                         'use_sim_time:=True',
                         'map:=/home/vaseegaran/ros2_ws/src/smart_nav_bot/maps/my_house_map.yaml'
                     ],
-                    output='screen'
-                )
-            ]
-        ),
-        
-        # Print instructions for manual RViz launch
-        TimerAction(
-            period=15.0,
-            actions=[
-                ExecuteProcess(
-                    cmd=['echo', 'Setup complete! Now run: ros2 run rviz2 rviz2'],
                     output='screen'
                 )
             ]

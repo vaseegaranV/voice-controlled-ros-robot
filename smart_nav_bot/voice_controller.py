@@ -34,7 +34,7 @@ class VoiceController(Node):
                 self.get_logger().warn("Could not understand the command.")
             except sr.RequestError as e:
                 self.get_logger().error(f"Could not request results; {e}")
-            except sr.WaitTimeoutError:
+            except:
                 self.get_logger().info("Didn't get a response, please try again")
 
     def process_commands(self, text):
