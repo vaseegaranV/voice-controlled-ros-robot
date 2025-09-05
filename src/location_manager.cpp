@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
@@ -22,7 +23,7 @@ class LocationManager : public rclcpp::Node{
             navigate_service_ = this->create_service<smart_nav_bot::srv::MoveToRoom>("navigate_room", std::bind(&LocationManager::navigate_to_room_callback, this, std::placeholders::_1, std::placeholders::_2));
             nav_action_client_ = rclcpp_action::create_client<smart_nav_bot::action::NavigateToRoom>(this, "navigate_to_room");
             room_name_service = this->create_service<smart_nav_bot::srv::GetRoomName>("get_room_names", std::bind(&LocationManager::get_rooms_callback, this, std::placeholders::_1, std::placeholders::_2));
-            
+            nav_goal_result_pub_ = this->create_publisher<std_msgs::msg::String>("nav_goal_result", 10);
         }
     
     private:
@@ -31,6 +32,7 @@ class LocationManager : public rclcpp::Node{
         rclcpp::Service<smart_nav_bot::srv::MoveToRoom>::SharedPtr navigate_service_;
         rclcpp_action::Client<smart_nav_bot::action::NavigateToRoom>::SharedPtr nav_action_client_;
         rclcpp::Service<smart_nav_bot::srv::GetRoomName>::SharedPtr room_name_service;
+        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr nav_goal_result_pub_;
         
         void save_location_callback(const std::shared_ptr<smart_nav_bot::srv::LocationSave::Request> request, 
             std::shared_ptr<smart_nav_bot::srv::LocationSave::Response> response){
@@ -74,11 +76,11 @@ class LocationManager : public rclcpp::Node{
 
         void goal_response_callback(std::shared_ptr<GoalHandleNavigateToRoom> goal_handle){
             if (!goal_handle){
-                RCLCPP_INFO(this->get_logger(), "Goal failed");
+                RCLCPP_INFO(this->get_logger(), "Goal rejected");
             }
             
             else{
-                RCLCPP_INFO(this->get_logger(), "Goal succeded");
+                RCLCPP_INFO(this->get_logger(), "Goal accepted");
             }
         }
 
@@ -87,18 +89,23 @@ class LocationManager : public rclcpp::Node{
         }
 
         void result_callback(const GoalHandleNavigateToRoom::WrappedResult &result){
+            auto msg = std_msgs::msg::String();
             switch (result.code) {
                 case rclcpp_action::ResultCode::SUCCEEDED:
                     RCLCPP_INFO(this->get_logger(), "Message: %s", result.result->message.c_str());
+                    msg.data = result.result->message.c_str();
                     break;
                 case rclcpp_action::ResultCode::ABORTED:
                     RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
+                    msg.data = "Goal was aborted";
                     return;
                 case rclcpp_action::ResultCode::CANCELED:
                     RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
+                    msg.data = "Goal was canceled";
                     return;
                 default:
                     RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+                    msg.data = "Unknown result code";
                     return;
             }
         }

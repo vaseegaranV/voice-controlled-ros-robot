@@ -11,6 +11,7 @@ class VoiceController(Node):
 
         self.navigate_client = self.create_client(MoveToRoom, "navigate_room")
         self.get_room_client = self.create_client(GetRoomName, "get_room_names")
+        self.nav_goal_result_sub = self.create_subscription(str, "nav_goal_result", self.nav_goal_result_callback, 10)
 
         self.recogniser = sr.Recognizer()
         self.microphone = sr.Microphone()
@@ -21,7 +22,6 @@ class VoiceController(Node):
         self.engine.setProperty('rate', 160)
         self.engine.setProperty('volume', 0.8)
 
-        self.get_logger().info("Say something")
         self.speak("Voice command is ready. Say a room name")
 
         self.listen_for_commands()
@@ -101,6 +101,10 @@ class VoiceController(Node):
         except Exception as e:
             self.get_logger().error(e)
             self.speak("Navigation error occurred")
+
+
+    def nav_goal_result_callback(self, msg):
+        self.speak(msg)
 
 def main(args=None):
     rclpy.init(args=args)

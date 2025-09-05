@@ -39,7 +39,7 @@ add_executable(odom_sub src/odom_sub.cpp)
 ament_target_dependencies(odom_sub rclcpp nav_msgs)
 
 add_executable(location_manager src/location_manager.cpp)
-ament_target_dependencies(location_manager rclcpp geometry_msgs nav2_msgs rclcpp_action)
+ament_target_dependencies(location_manager rclcpp geometry_msgs nav2_msgs rclcpp_action std_msgs)
 
 add_executable(navigation_manager src/navigation_manager.cpp)
 ament_target_dependencies(navigation_manager rclcpp geometry_msgs nav2_msgs rclcpp_action)
