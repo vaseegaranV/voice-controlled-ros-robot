@@ -10,6 +10,7 @@
 #include "smart_nav_bot/srv/move_to_room.hpp"
 #include "smart_nav_bot/srv/location_save.hpp"
 #include "smart_nav_bot/srv/get_room_name.hpp"
+#include "smart_nav_bot/srv/cancel_current_goal.hpp"
 #include "smart_nav_bot/action/navigate_to_room.hpp"
 
 using NavigateToRoom = smart_nav_bot::action::NavigateToRoom;
@@ -24,6 +25,7 @@ class LocationManager : public rclcpp::Node{
             nav_action_client_ = rclcpp_action::create_client<smart_nav_bot::action::NavigateToRoom>(this, "navigate_to_room");
             room_name_service = this->create_service<smart_nav_bot::srv::GetRoomName>("get_room_names", std::bind(&LocationManager::get_rooms_callback, this, std::placeholders::_1, std::placeholders::_2));
             nav_goal_result_pub_ = this->create_publisher<std_msgs::msg::String>("nav_goal_result", 10);
+            cancel_current_goal_service_ = this->create_service<smart_nav_bot::srv::CancelCurrentGoal>("cancel_current_goal", std::bind(&LocationManager::cancel_current_goal_callback, this, std::placeholders::_1, std::placeholders::_2));
         }
     
     private:
@@ -33,6 +35,8 @@ class LocationManager : public rclcpp::Node{
         rclcpp_action::Client<smart_nav_bot::action::NavigateToRoom>::SharedPtr nav_action_client_;
         rclcpp::Service<smart_nav_bot::srv::GetRoomName>::SharedPtr room_name_service;
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr nav_goal_result_pub_;
+        rclcpp::Service<smart_nav_bot::srv::CancelCurrentGoal>::SharedPtr cancel_current_goal_service_;
+        std::shared_ptr<GoalHandleNavigateToRoom> current_goal_handle;
         
         void save_location_callback(const std::shared_ptr<smart_nav_bot::srv::LocationSave::Request> request, 
             std::shared_ptr<smart_nav_bot::srv::LocationSave::Response> response){
@@ -81,6 +85,7 @@ class LocationManager : public rclcpp::Node{
             
             else{
                 RCLCPP_INFO(this->get_logger(), "Goal accepted");
+                this->current_goal_handle = goal_handle;
             }
         }
 
@@ -108,6 +113,9 @@ class LocationManager : public rclcpp::Node{
                     msg.data = "Unknown result code";
                     return;
             }
+
+            current_goal_handle = nullptr;
+            nav_goal_result_pub_->publish(msg);
         }
 
         void get_rooms_callback(const std::shared_ptr<smart_nav_bot::srv::GetRoomName::Request> /*request*/, 
@@ -126,6 +134,29 @@ class LocationManager : public rclcpp::Node{
 
                 RCLCPP_INFO(this->get_logger(), "Sending room details...");
         }
+
+        void cancel_current_goal_callback(const std::shared_ptr<smart_nav_bot::srv::CancelCurrentGoal::Request> /*request*/,
+            std::shared_ptr<smart_nav_bot::srv::CancelCurrentGoal::Response> response){
+
+                if (current_goal_handle == nullptr){
+                    response->message = "No goal found";
+                }
+
+                else{
+                    auto cancel_future = nav_action_client_->async_cancel_all_goals();
+                    auto cancel_result = cancel_future.get();
+
+                    if (cancel_result->return_code == action_msgs::srv::CancelGoal_Response::ERROR_NONE){
+                        response->message = "Cancelled";
+                    }
+
+                    else{
+                        response->message = "Cancel Failed";
+                    }
+
+                    current_goal_handle = nullptr;
+                }
+            }
 };
 
 int main(int argc, char * argv[]){

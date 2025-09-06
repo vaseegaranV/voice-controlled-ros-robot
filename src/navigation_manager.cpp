@@ -34,7 +34,6 @@ class NavigationManager : public rclcpp::Node{
         rclcpp_action::Server<NavigateToRoom>::SharedPtr nav_action_server_;
 
         rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const NavigateToRoom::Goal> goal){
-            // Replace 'room_name' with the actual member of NavigateToRoom::Goal if different
             RCLCPP_INFO(this->get_logger(), "Received goal request for room: %s", goal->room_name.c_str());
             (void)uuid;
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;

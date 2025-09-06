@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import String
 import speech_recognition as sr
 import pyttsx3
-from smart_nav_bot.srv import MoveToRoom, GetRoomName
+from smart_nav_bot.srv import MoveToRoom, GetRoomName, CancelCurrentGoal
 
 class VoiceController(Node):
     def __init__(self):
@@ -11,7 +12,8 @@ class VoiceController(Node):
 
         self.navigate_client = self.create_client(MoveToRoom, "navigate_room")
         self.get_room_client = self.create_client(GetRoomName, "get_room_names")
-        self.nav_goal_result_sub = self.create_subscription(str, "nav_goal_result", self.nav_goal_result_callback, 10)
+        self.nav_goal_result_sub = self.create_subscription(String, "nav_goal_result", self.nav_goal_result_callback, 10)
+        self.cancel_current_goal_client = self.create_client(CancelCurrentGoal, "cancel_current_goal")
 
         self.recogniser = sr.Recognizer()
         self.microphone = sr.Microphone()
@@ -44,7 +46,6 @@ class VoiceController(Node):
                 self.process_commands(command.lower())
             except sr.UnknownValueError:
                 self.get_logger().warn("Could not understand the command.")
-                self.speak("I didn't understand that. Please try again.")
             except sr.RequestError as e:
                 self.get_logger().error(f"Could not request results; {e}")
                 self.speak("Service failed")
@@ -52,28 +53,44 @@ class VoiceController(Node):
                 self.get_logger().info("Didn't get a response, please try again")
 
     def process_commands(self, text):
-        if not self.get_room_client.wait_for_service(timeout_sec=5.0):
-            self.get_logger().info("Service unavailable")
-            self.speak("Navigation service is not available")
-            return
+        stop_commands = ['stop', 'halt', 'abort']
+        if text in stop_commands:
+            if not self.cancel_current_goal_client.wait_for_service(timeout_sec=5.0):
+                self.get_logger().info("Service unavailable")
+                self.speak("Cancel service is not available")
+                return
+            
+            cancel_request = CancelCurrentGoal.Request()
+
+            cancel_future = self.cancel_current_goal_client.call_async(cancel_request)
+            rclpy.spin_until_future_complete(self, cancel_future)
+            msg = cancel_future.result().message
+            self.get_logger().info(msg)
+            self.speak(msg)
         
-        request = GetRoomName.Request()
-
-        future = self.get_room_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future)
-        keywords = future.result().room_names
-
-        room_found = None
-        for keyword in keywords:
-            if keyword in text:
-                room_found = keyword
-
-        if room_found:
-            self.get_logger().info(f"We found room {room_found}")
-            self.speak(f"Moving to {room_found}")
-            self.call_navigation_service(room_found)
         else:
-            self.get_logger().info(f"Room can't be found")
+            if not self.get_room_client.wait_for_service(timeout_sec=5.0):
+                self.get_logger().info("Service unavailable")
+                self.speak("Navigation service is not available")
+                return
+            
+            request = GetRoomName.Request()
+
+            future = self.get_room_client.call_async(request)
+            rclpy.spin_until_future_complete(self, future)
+            keywords = future.result().room_names
+
+            room_found = None
+            for keyword in keywords:
+                if keyword in text:
+                    room_found = keyword
+
+            if room_found:
+                self.get_logger().info(f"We found room {room_found}")
+                self.speak(f"Moving to {room_found}")
+                self.call_navigation_service(room_found)
+            else:
+                self.get_logger().info(f"Room can't be found")
     
     def call_navigation_service(self, room_name):
         if not self.navigate_client.wait_for_service(timeout_sec=5.0):
@@ -93,10 +110,8 @@ class VoiceController(Node):
 
             if response.success:
                 self.get_logger().info(f"Navigation started: {response.msg}")
-                self.speak("Navigation started")
             else:
                 self.get_logger().info(f"Navigation unsuccessful: {response.msg}")
-                self.speak("Failed to navigate")
         
         except Exception as e:
             self.get_logger().error(e)
@@ -104,7 +119,7 @@ class VoiceController(Node):
 
 
     def nav_goal_result_callback(self, msg):
-        self.speak(msg)
+        self.speak(msg.data)
 
 def main(args=None):
     rclpy.init(args=args)

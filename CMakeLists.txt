@@ -27,16 +27,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/LocationSave.srv"
   "srv/MoveToRoom.srv"
   "srv/GetRoomName.srv"
+  "srv/CancelCurrentGoal.srv"
   "action/NavigateToRoom.action"
   DEPENDENCIES geometry_msgs
 )
-
-
-add_executable(basic_mover src/basic_mover.cpp)
-ament_target_dependencies(basic_mover rclcpp geometry_msgs nav_msgs tf2)
-
-add_executable(odom_sub src/odom_sub.cpp)
-ament_target_dependencies(odom_sub rclcpp nav_msgs)
 
 add_executable(location_manager src/location_manager.cpp)
 ament_target_dependencies(location_manager rclcpp geometry_msgs nav2_msgs rclcpp_action std_msgs)
@@ -47,14 +41,6 @@ ament_target_dependencies(navigation_manager rclcpp geometry_msgs nav2_msgs rclc
 
 rosidl_target_interfaces(location_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
 rosidl_target_interfaces(navigation_manager ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
-install(TARGETS basic_mover
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(TARGETS odom_sub
-  DESTINATION lib/${PROJECT_NAME}
-)
 
 install(TARGETS location_manager
   DESTINATION lib/${PROJECT_NAME}
