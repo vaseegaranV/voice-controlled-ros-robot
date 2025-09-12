@@ -16,6 +16,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -27,9 +28,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/LocationSave.srv"
   "srv/MoveToRoom.srv"
   "srv/GetRoomName.srv"
-  "srv/CancelCurrentGoal.srv"
   "action/NavigateToRoom.action"
-  DEPENDENCIES geometry_msgs
+  DEPENDENCIES geometry_msgs std_msgs
 )
 
 add_executable(location_manager src/location_manager.cpp)
@@ -55,6 +55,10 @@ install(PROGRAMS smart_nav_bot/voice_controller.py
 )
 
 install(PROGRAMS smart_nav_bot/room_saver.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS smart_nav_bot/result_subscriber.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

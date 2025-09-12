@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'voice_controller = smart_nav_bot.voice_controller:main',
             'room_saver = smart_nav_bot.room_saver:main',
+            'result_subscriber = smart_nav_bot.result_subscriber:main',
         ],
     },
 )

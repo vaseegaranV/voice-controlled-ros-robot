@@ -21,5 +21,11 @@ def generate_launch_description():
             executable='voice_controller.py',
             name='voice_controller',
             output='screen'
+        ),
+        Node(
+            package='smart_nav_bot',
+            executable='result_subscriber.py',
+            name='result_subscriber',
+            output='screen'
         )
     ])

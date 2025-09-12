@@ -14,19 +14,6 @@ def generate_launch_description():
             'QT_QPA_PLATFORM',
             'xcb'
         ),
-
-        Node(
-            package='smart_nav_bot',
-            executable='location_manager',
-            name='location_manager',
-            output='screen'
-        ),
-        Node(
-            package='smart_nav_bot',
-            executable='navigation_manager',
-            name='navigation_manager',
-            output='screen'
-        ),
         
         # Launch Gazebo world
         ExecuteProcess(
