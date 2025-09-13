@@ -18,6 +18,18 @@ using namespace std::placeholders;
 
 
 class NavigationManager : public rclcpp::Node{
+
+    /**
+     * NavigationManager Node
+     * ----------------------
+     * This node provides a ROS 2 action server 'navigate_to_room' that:
+     * - Receives a room name from a client.
+     * - Retrieves the room's coordinates via the 'get_room_names' service.
+     * - Sends a navigation goal to Nav2 ('NavigateToPose').
+     * - Publishes progress feedback to the action client.
+     * - Handles goal cancellation and aborts as needed.
+     */
+
     public:
         NavigationManager() : Node("navigation_manager"){
             get_name_client_ = this->create_client<GetRoomName>("get_room_names");

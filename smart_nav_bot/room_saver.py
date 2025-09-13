@@ -4,6 +4,12 @@ from rclpy.node import Node
 from smart_nav_bot.srv import LocationSave
 
 class RoomSaver(Node):
+
+    """
+    Interactive ROS 2 node to save room coordinates.
+    Users input room names and x,y positions, which are sent to the LocationSave service.
+    """
+
     def __init__(self):
         super().__init__("room_saver")
         self.location_client = self.create_client(LocationSave, "save_location")

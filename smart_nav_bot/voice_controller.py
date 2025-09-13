@@ -6,7 +6,14 @@ import speech_recognition as sr
 import pyttsx3
 from smart_nav_bot.srv import MoveToRoom, GetRoomName
 
+
 class VoiceController(Node):
+
+    """
+    Voice-controlled navigation ROS 2 node.
+    Listens to voice commands, identifies room names, and navigates the robot.
+    """
+
     def __init__(self):
         super().__init__("voice_controller")
 

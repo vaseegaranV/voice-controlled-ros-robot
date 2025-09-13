@@ -5,6 +5,11 @@ from std_msgs.msg import String
 import pyttsx3
 
 class ResultSubscriber(Node):
+
+    """
+    Subscribes to the 'nav_goal_result' topic and speaks the received messages using TTS.
+    """
+        
     def __init__(self):
         super().__init__("result_subscriber")
 

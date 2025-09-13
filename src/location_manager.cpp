@@ -16,6 +16,19 @@ using NavigateToRoom = smart_nav_bot::action::NavigateToRoom;
 using GoalHandleNavigateToRoom = rclcpp_action::ClientGoalHandle<NavigateToRoom>;
 
 class LocationManager : public rclcpp::Node{
+
+    /**
+     * LocationManager Node
+     * -------------------
+     * This node manages room locations and navigation.
+     * - Stores room names and poses
+     * - Provides a service to save room locations
+     * - Provides a service to navigate to a specified room
+     * - Provides a service to get all room names and their poses
+     * - Uses an action client to communicate with the navigation stack
+     * - Publishes navigation result messages for TTS feedback
+     */
+
     public:
         LocationManager() : Node("location_manager"){
             room_locations = std::map<std::string, geometry_msgs::msg::Pose>();
@@ -58,8 +71,6 @@ class LocationManager : public rclcpp::Node{
                     return;
                 }
 
-                RCLCPP_INFO(this->get_logger(), "We are in navigateTO room callback");
-
                 auto goal_msg = smart_nav_bot::action::NavigateToRoom::Goal();
                 goal_msg.room_name = request->room_name;
 
@@ -94,19 +105,19 @@ class LocationManager : public rclcpp::Node{
             auto msg = std_msgs::msg::String();
             switch (result.code) {
                 case rclcpp_action::ResultCode::SUCCEEDED:
-                    RCLCPP_INFO(this->get_logger(), "SEnding to voice: Message: %s", result.result->message.c_str());
+                    RCLCPP_INFO(this->get_logger(), "Sending to voice: Message: %s", result.result->message.c_str());
                     msg.data = result.result->message.c_str();
                     break;
                 case rclcpp_action::ResultCode::ABORTED:
-                    RCLCPP_ERROR(this->get_logger(), "SEnding to voice: Goal was aborted");
+                    RCLCPP_ERROR(this->get_logger(), "Sending to voice: Goal was aborted");
                     msg.data = "Goal was aborted";
                     break;
                 case rclcpp_action::ResultCode::CANCELED:
-                    RCLCPP_ERROR(this->get_logger(), "SEnding to voice: Goal was canceled");
+                    RCLCPP_ERROR(this->get_logger(), "Sending to voice: Goal was canceled");
                     msg.data = "Goal was canceled";
                     break;
                 default:
-                    RCLCPP_ERROR(this->get_logger(), "SEnding to voice: Unknown result code");
+                    RCLCPP_ERROR(this->get_logger(), "Sending to voice: Unknown result code");
                     msg.data = "Unknown result code";
                     break;
             }

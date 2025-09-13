@@ -3,6 +3,15 @@ from launch.actions import SetEnvironmentVariable, ExecuteProcess, TimerAction
 from launch_ros.actions import Node
 
 def generate_launch_description():
+    
+    """
+    Launch smart_nav_bot nodes:
+    - location_manager: manages saved room locations
+    - navigation_manager: handles robot navigation
+    - voice_controller: receives voice commands and triggers navigation
+    - result_subscriber: announces navigation results via TTS
+    """
+
     return LaunchDescription([
         Node(
             package='smart_nav_bot',

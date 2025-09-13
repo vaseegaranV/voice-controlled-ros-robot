@@ -3,6 +3,14 @@ from launch.actions import SetEnvironmentVariable, ExecuteProcess, TimerAction
 from launch_ros.actions import Node
 
 def generate_launch_description():
+    
+    """
+    Launch TurtleBot3 Gazebo simulation and Navigation2 stack with a custom map.
+    - Sets environment variables required by Gazebo and TurtleBot3.
+    - Launches Gazebo world.
+    - Launches Nav2 after a delay to ensure Gazebo is ready.
+    """
+
     return LaunchDescription([
         # Set TURTLEBOT3_MODEL=burger
         SetEnvironmentVariable(
